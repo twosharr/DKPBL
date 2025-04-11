@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crypto Heatmap</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to bottom right, #0d1117, #161b22);
+      color: #fff;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.4rem;
+      color: #58a6ff;
+      margin-bottom: 30px;
+    }
+
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 25px;
+    }
+
+    .tile {
+      background: rgba(22, 27, 34, 0.8);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .tile:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 0 12px rgba(88, 166, 255, 0.3);
+      z-index: 2;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-bottom: 12px;
+      border: 1px solid #333;
+    }
+
+    .coin-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+      color: #c9d1d9;
+    }
+
+    .coin-price {
+      font-size: 0.95rem;
+      color: #8b949e;
+      margin-bottom: 5px;
+    }
+
+    .coin-change {
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔥 Real-Time Crypto Market Heatmap</h1>
+  <div class="heatmap" id="heatmap"></div>
+
+  <script>
+    function getColor(change) {
+      if (change > 10) return '#16c784';
+      if (change > 0) return '#2ecc71';
+      if (change < -10) return '#ea3943';
+      if (change < 0) return '#e74c3c';
+      return '#777';
+    }
+
+    async function loadHeatmap() {
+      const container = document.getElementById('heatmap');
+      container.innerHTML = '';
+
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false');
+
+        const coins = await res.json();
+
+        coins.forEach(coin => {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          tile.style.borderColor = getColor(coin.price_change_percentage_24h);
+
+          tile.innerHTML = `
+            <img class="logo" src="${coin.image}" alt="${coin.name} Logo"/>
+            <div class="coin-name">${coin.name} (${coin.symbol.toUpperCase()})</div>
+            <div class="coin-price">$${coin.current_price.toLocaleString()}</div>
+            <div class="coin-change" style="background-color: ${getColor(coin.price_change_percentage_24h)}22; color: ${getColor(coin.price_change_percentage_24h)}">
+              ${coin.price_change_percentage_24h.toFixed(2)}%
+            </div>
+          `;
+
+          container.appendChild(tile);
+        });
+      } catch (err) {
+        console.error('Failed to fetch:', err);
+        container.innerHTML = '<p style="color: red; text-align: center;">Failed to load data. Please check your connection.</p>';
+      }
+    }
+
+    loadHeatmap();
+    setInterval(loadHeatmap, 5 * 60 * 1000); // Refresh every 5 minutes
+  </script>
+</body>
+</html>
